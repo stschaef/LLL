@@ -1,0 +1,100 @@
+\documentclass[english]{article}
+\hyphenpenalty=10000
+% ------------------- Title -------------------
+\newcommand{\fullname}{Steven Schaefer}
+\newcommand{\email}{stschaef@iu.edu}
+\newcommand{\course}{MATH M601}
+\newcommand \assignment {Homework 10}
+\newcommand \duedate {Wednesday, November 11th, 2020}
+
+% ------------------- Packages -------------------
+% Overall formatting, use these pretty much always
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{tgschola}
+\usepackage{titlesec}
+\usepackage[margin=1in]{geometry}
+
+% Tikz stuff. Uncomment when using
+
+% \usepackage{tikz-cd}
+% \usepackage{tikz}
+% \usepackage{pgfplots}
+% \pgfplotsset{compat=1.9}
+% \usepgfplotslibrary{fillbetween}
+
+% Math stuff, I'm not entirely sure what all of these do
+\usepackage{multicol}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage[capitalise]{cleveref}
+\usepackage{enumitem} % for autoenumeration of parts
+\usepackage{mathtools} % for 'bsmallmatrix' environment
+
+% ------------------- Math Operators -------------------
+% mathbb
+\DeclareMathOperator{\R}{\mathbb{R}}
+\DeclareMathOperator{\Q}{\mathbb{Q}}
+\DeclareMathOperator{\N}{\mathbb{N}}
+\DeclareMathOperator{\Z}{\mathbb{Z}}
+\DeclareMathOperator{\C}{\mathbb{C}}
+\DeclareMathOperator{\F}{\mathbb{F}}
+
+\DeclareMathOperator{\Mat}{\text{Mat}}
+\DeclareMathOperator{\GCD}{\text{GCD}}
+\DeclareMathOperator{\LCM}{\text{LCM}}
+\DeclareMathOperator{\Id}{\text{Id}}
+\DeclareMathOperator{\id}{\text{id}}
+\DeclareMathOperator{\Sym}{\text{Sym}}
+\DeclareMathOperator{\Gal}{\text{Gal}}
+\DeclareMathOperator{\Aut}{\text{Aut}}
+\DeclareMathOperator{\Alt}{\text{Alt}}
+\DeclareMathOperator{\Hom}{\text{Hom}}
+\DeclareMathOperator{\Tr}{\text{Tr}}
+\DeclareMathOperator{\sgn}{\text{sgn}}
+\DeclareMathOperator{\rk}{\text{rk}}
+\DeclareMathOperator{\Cl}{\text{Cl}}
+\DeclareMathOperator{\Log}{\text{Log}}
+
+\renewcommand{\Im}{\text{Im}\ }
+\renewcommand{\Re}{\text{Re}\ }
+
+\newcommand{\inv}[1]{#1^{-1}}
+\newcommand{\tup}[3]{#1_{#2}, \dots, #1_{#3}}
+\newcommand{\into}{\hookrightarrow}
+\newcommand{\onto}{\twoheadrightarrow}
+\newcommand{\Legendre}[2]{\left( \dfrac{#1}{#2} \right)}
+
+% ------------------- Theorems and Evironments -------------------
+% For restarting counter after each section
+% \newtheorem{theorem}{Theorem}[section] % the main one 
+\newtheorem{theorem}{Theorem} % the main one
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\newenvironment{problem}[2][Problem]{\begin{trivlist}\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2}]}{\end{trivlist}}
+
+\newenvironment{subproblem}[1]{\begin{trivlist}\item[\hspace{2em} \hskip \labelsep {\bfseries #1}]}{\end{trivlist}} 
+
+\titleformat{\section}
+{\normalfont\Large\bfseries}{\thesection}{1em}{}[{\titlerule[0.8pt]}]
+
+% ------------------- Header -------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{\course{} -- \assignment}
+\rhead{\textit{stschaef}}
+
+% ------------------- Document -------------------
+\begin{document}
+\begin{align*}
+    \mu(n) = \begin{cases}
+        1, \quad n = 1, \\
+        (-1)^k, \quad n = \prod_{i = 1}^k p_i \text{ distinct primes}, \\
+        0, \quad n \text{ not squarefree}
+    \end{cases}
+\end{align*}
+\end{document}
