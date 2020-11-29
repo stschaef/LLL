@@ -216,18 +216,37 @@ def lll(basis, delta=.75):
 #             out += " {} {}x^{}".format(sign, coeff_str, i)
 #     return out
 
+# TODO: Opening Quote
+# TODO: Outline of video
+# TODO: LLL Definitions (Size and Lovasz)
+# TODO: LLL psuedocode
+# TODO: Approxs of alg numbers
+# TODO: Crypto
+# TODO: Rework Mertens stuff
+# TODO: Number Field stuff 
+
 class LLLSymbolic2D(Scene):
     def make_vec(self, coords, color_in=WHITE):
-        return TexMobject(r"\begin{bmatrix} " + str(coords[0]) + r" \\ " + str(coords[1]) + r"\end{bmatrix}", color=color_in)
+        # TODO: Weird .0 at end of orthog vecs in the 2D case
+        coord_str = ""
+        for i, coord in enumerate(coords):
+            if i != self.n_dim - 1:
+                coord_str += str(coord) + r" \\ "
+            else:
+                coord_str += str(coord)
+        return TexMobject(r"\begin{bmatrix} " + coord_str + r"\end{bmatrix}", color=color_in)
 
 
-    def init_vars(self):
+    def init_vars(self, basis=None):
         # self.colors = [YELLOW, GREEN, BLUE, PURPLE]
+        self.n_dim = 2
         self.colors = [WHITE]*10
         self.delta = .75
 
         self.basis = np.array([[201, 37, 0],
                                [1648, 297, 0]])
+        if basis is not None:
+            self.basis = basis
 
         self.basis_text = TextMobject("Basis")
         self.basis_text.to_corner(UL, buff=1)
@@ -239,15 +258,15 @@ class LLLSymbolic2D(Scene):
             self.basis_labels[i].next_to(obj, direction=LEFT)
             self.basis_displays[i] = VGroup(self.basis_labels[i], obj)
             if i == 0:
-                self.basis_displays[i].next_to(self.basis_text, RIGHT, buff=1)
+                self.basis_displays[i].next_to(self.basis_text, RIGHT, buff=2/self.n_dim)
             else:
-                self.basis_displays[i].next_to(self.basis_displays[i - 1], RIGHT, buff=2)
+                self.basis_displays[i].next_to(self.basis_displays[i - 1], RIGHT, buff=2/self.n_dim)
 
         self.play(Write(self.basis_text))
         self.play(*[Write(o) for o in self.basis_displays])
 
         self.gs_text = TextMobject(r"Gram- \\ Schmidt")
-        self.gs_text.next_to(self.basis_text, direction=DOWN, buff=1)
+        self.gs_text.next_to(self.basis_text, direction=DOWN, buff=self.n_dim/1.5)
 
         self.orthog = self.gram_schmidt(copy.deepcopy(self.basis))
         
@@ -276,8 +295,8 @@ class LLLSymbolic2D(Scene):
         self.k_tex = TexMobject("k", "=", str(self.k))
         self.k_tex.set_color(YELLOW)
         self.k_tex.set_y(a.get_y())
-        self.k_tex.shift(RIGHT*4)
         self.k_tex.scale(2)
+        self.k_tex.to_edge(RIGHT)
         self.play(Write(self.k_tex))
 
     def update_k_tex(self):
@@ -296,18 +315,26 @@ class LLLSymbolic2D(Scene):
         self.basis_objs[self.k].set_color(YELLOW)
 
     def dehehighlight_working_vector(self):
-        if self.k < len(self.basis):
-            self.basis_displays[self.k].generate_target()
-            self.basis_displays[self.k].target.set_color(WHITE)
-            self.play(MoveToTarget(self.basis_displays[self.k]))
+        # Cheat and dehilight all vectors
+        for i, _ in enumerate(self.basis):
+            self.basis_displays[i].generate_target()
+            self.basis_displays[i].target.set_color(WHITE)
+            self.basis_objs[i].set_color(WHITE)
 
-            self.basis_objs[self.k].set_color(WHITE)
-        else:
-            self.basis_displays[self.k - 1].generate_target()
-            self.basis_displays[self.k - 1].target.set_color(WHITE)
-            self.play(MoveToTarget(self.basis_displays[self.k - 1]))
+        self.play(*[MoveToTarget(self.basis_displays[i]) for i, _ in enumerate(self.basis)])
 
-            self.basis_objs[self.k - 1].set_color(WHITE)
+        # if self.k < len(self.basis):
+        #     self.basis_displays[self.k].generate_target()
+        #     self.basis_displays[self.k].target.set_color(WHITE)
+        #     self.play(MoveToTarget(self.basis_displays[self.k]))
+
+        #     self.basis_objs[self.k].set_color(WHITE)
+        # else:
+        #     self.basis_displays[self.k - 1].generate_target()
+        #     self.basis_displays[self.k - 1].target.set_color(WHITE)
+        #     self.play(MoveToTarget(self.basis_displays[self.k - 1]))
+
+        #     self.basis_objs[self.k - 1].set_color(WHITE)
 
     def sq_norm(self, v):
         return np.dot(v, v)
@@ -348,7 +375,8 @@ class LLLSymbolic2D(Scene):
 
     def update_vector(self, old_vector, new_coords):
         new_coords = np.around(new_coords, decimals=2)
-        x = TexMobject(r"\begin{bmatrix} " + str(new_coords[0]) + r" \\ " + str(new_coords[1]) + r"\end{bmatrix}", color=old_vector.get_color())
+        x = self.make_vec(new_coords)
+        x.set_color(old_vector.get_color())
         x.move_to(old_vector.get_center())
         self.play(Transform(old_vector, x))
 
@@ -388,7 +416,7 @@ class LLLSymbolic2D(Scene):
             tex_list = [r"\textbf{b}_" + str(self.k) + r"} = ", r"\textbf{b}_" + str(self.k) + r"}", "-", r"\lfloor \mu_{" + str(self.k) + "," + str(cur) + r"} \rceil", r"\cdot", r"\textbf{b}_" + str(cur)]
 
             update_basis = TexMobject(*tex_list)
-            update_basis.to_edge(DOWN)
+            update_basis.next_to(mu_display, direction=DOWN, buff=1)
             update_basis.set_x(0)
             self.play(Write(update_basis))
 
@@ -449,12 +477,82 @@ class LLLSymbolic2D(Scene):
 
     def lovasz_anim(self):
         lov = TextMobject(r"Lov\'asv \\ Condition")
-        lovasz_lhs = self.sq_norm(self.orthog[self.k])
-        lovasz_rhs = (self.delta - self.mu[self.k][self.k - 1]**2) * self.sq_norm(self.orthog[self.k - 1])
-        if lovasz_lhs >= lovasz_rhs:
+        lov.shift(DOWN)
+        lov.set_x(0)
+
+        lhs_tex = TexMobject(r"\left| b^*_" + str(self.k) + r" \right|^2")
+        rhs_tex = TexMobject(r"\left( 3/4 - \mu_{" + str(self.k) + "," + str(self.k - 1) + r"} \right)^2 \cdot \left| b^*_" + str(self.k - 1) + r" \right|^2")
+        
+        lhs = self.sq_norm(self.orthog[self.k])
+        rhs = (self.delta - self.mu[self.k][self.k - 1]**2) * self.sq_norm(self.orthog[self.k - 1])
+
+        geq = TexMobject(r"\geq")
+        equal_1 = TexMobject(r"=")
+        equal_2 = TexMobject(r"=")
+        
+        lhs_val_tex = TexMobject(str(np.around(lhs, decimals=2)))
+        rhs_val_tex = TexMobject(str(np.around(rhs, decimals=2)))
+
+        equal_1.next_to(lhs_tex)
+        lhs_val_tex.next_to(equal_1)
+        geq.next_to(lhs_val_tex)
+        rhs_val_tex.next_to(geq)
+        equal_2.next_to(rhs_val_tex)
+        rhs_tex.next_to(equal_2)
+
+        a = VGroup(lhs_tex, rhs_tex, lhs_val_tex, rhs_val_tex, equal_1, equal_2, geq)
+        a.next_to(lov, direction=DOWN)
+
+        self.play(Write(lov), ShowCreation(a))
+        self.wait(1)
+        self.play(FadeOutAndShift(lov))
+
+        a.generate_target()
+        a.target.shift(UP)
+        self.play(MoveToTarget(a))
+
+        if lhs >= rhs:
+            check = TexMobject(r"\checkmark")
+            check.scale(2)
+            check.next_to(a, direction=RIGHT)
+            check.set_color(GREEN)
+            self.play(Write(check))
+            self.wait(1)
+
+            increment_k = TexMobject(r"\text{Increment } k")
+            increment_k.next_to(a, direction=DOWN)
+            self.play(Write(increment_k))
+            self.wait(2)
             self.k += 1
             self.update_k_tex()
+            self.play(FadeOutAndShift(check), FadeOutAndShift(a), FadeOut(increment_k))
         else:
+            xmark = TexMobject(r"\text{\sffamily X}")
+            xmark.scale(2)
+            xmark.next_to(a, direction=RIGHT)
+            xmark.set_color(RED)
+            self.play(Write(xmark))
+            
+
+            swap = TexMobject(r"\text{Swap}( \textbf{b}_" + str(self.k) + r", \textbf{b}_" + str(self.k - 1) + r")")
+            max_k_list = [r"k = \text{max}(", "k - 1", ", 1)"]
+            max_k = TexMobject(*max_k_list)
+            swap.next_to(a, direction=DOWN)
+            max_k.next_to(swap, direction=DOWN)
+            self.play(Write(swap), Write(max_k))
+
+            self.wait(2)
+
+
+            k_minus_1 = str(self.k - 1)
+            b_list = copy.deepcopy(max_k_list)
+            b_list[1] = k_minus_1
+            b = TexMobject(*b_list)
+            b.move_to(max_k.get_center())
+            self.play(ReplacementTransform(max_k, b))
+
+            self.wait(1)
+            
             temp = copy.deepcopy(self.basis[self.k])
             self.basis[self.k] = copy.copy((self.basis[self.k - 1]))
             self.update_vector(self.basis_objs[self.k], self.basis[self.k])
@@ -464,6 +562,8 @@ class LLLSymbolic2D(Scene):
             self.update_gs()
             self.k = max(self.k - 1, 1)
             self.update_k_tex()
+
+            self.play(FadeOutAndShift(a), FadeOutAndShift(xmark), FadeOutAndShift(swap), FadeOutAndShift(b))
 
 
     def lll_anim(self):
@@ -508,7 +608,16 @@ class LLLSymbolic2D(Scene):
         self.init_vars()
         self.lll_anim()
         
-
+class LLLSymbolic3D(LLLSymbolic2D):
+    def make_vec(self, coords, color_in=WHITE):
+        return TexMobject(r"\begin{bmatrix} " + str(coords[0]) + r" \\ " + str(coords[1]) + r" \\ " + str(coords[2]) + r"\end{bmatrix}", color=color_in)
+    def construct(self):
+        self.n_dim = 3
+        self.init_vars(basis=np.array([[1, 1, 1],
+                                       [-1, 0, 2],
+                                       [3, 5, 6]]))
+        self.lll_anim()
+    
         
         
 
