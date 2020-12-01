@@ -5,111 +5,82 @@ import numpy as np
 
 class definitions(Scene):
     def construct(self):
-        mobius_title = TextMobject("The ", r"""M\"obius function """, "is given as,")
-        mobius_title[1].set_color(BLUE)
-        mobius_title.shift(UP * 3.5)
+        mobius_title = TextMobject(r"The ", r"M\"obius function", r" is given as,")
+        mobius_title.set_color_by_tex(r"M\"obius function", BLUE)
+        mobius_title.to_edge(UP)
 
         mobius = TexMobject(
-            "\mu", "(", "n", ")",  "=", r""" \begin{cases}
+            r"\mu(n)",  "=", r""" \begin{cases}
                         1, \quad n = 1, \\
                         (-1)^k, \quad n = \prod_{i = 1}^k p_i \text{ distinct primes}  \\
                         0, \quad n \text{ not squarefree}
             \end{cases} """
             )
-        for i in [0, 1, 3]:
-            mobius[i].set_color(BLUE)
-        mobius[2].set_color(RED)
-        for i, char in enumerate(mobius[5]):
-            if char.path_string == TexMobject("n")[0][0].path_string:
-                mobius[5][i].set_color(RED)
-            
-        mobius.shift(UP)
 
-        mertens = TexMobject(
-            "M", "(", "n", ")", "=", "\sum_{k=1}^n", "\mu(k)", r", \quad", "n", "\in", "\Z^+"
-        )
-        
-        for i in [0, 1, 3]:
-            mertens[i].set_color(GREEN)
-        for i in [2, 8]:
-            mertens[i].set_color(RED)
-        mertens[-1].set_color(YELLOW)
-        mertens[6].set_color(BLUE)
-
-        mertens.shift(UP*2)
+        mobius.set_color_by_tex(r"\mu", BLUE)
+        mobius.next_to(mobius_title, direction=DOWN)
 
         mertens_title = TextMobject("The ", r"""Mertens function """, "is given as,")
-        mertens_title[1].set_color(GREEN)
-        mertens_title.shift(UP * 3.5)
+        mertens_title.set_color_by_tex(r"function", GREEN)
+        mertens_title.move_to(mobius_title.get_center())
+
+        mertens_list = ["M(n)", "=", "\sum_{k=1}^n", "\mu(k)", r", \quad", "n", "\in", "\Z^+"]
+        mertens = TexMobject(*mertens_list)
         
+        mertens.set_color_by_tex("M(n)", GREEN)
+        mertens.set_color_by_tex(r"\mu", BLUE)
+        mertens.next_to(mertens_title, direction=DOWN)
+        mertens.shift(RIGHT)
+
         primes = "distinct primes"
-        loc = str(mobius[5]).find(primes)
+        loc = str(mobius[2]).find(primes)
 
         self.play(
             Write(mobius_title),
             FadeInFrom(mobius, UP))
         self.wait()
-        self.play(Indicate(mobius[5][27 + loc:25 + len(primes)]))
+        self.play(Indicate(mobius[2][27 + loc:25 + len(primes)]))
         self.wait()
 
         mobius.generate_target()
-        mobius.target.shift(DOWN * 2)
+        mobius.target.scale(.8)
+        mobius.target.to_corner(DR)
+        self.play(MoveToTarget(mobius))
+        self.play(FadeOutAndShiftDown(mobius_title))
 
-        self.play(
-            MoveToTarget(mobius),
-            LaggedStart(*map(FadeOutAndShiftDown, mobius_title)))
-        self.wait()
         self.play(
             Write(mertens_title),
-            Write(mertens[0:7]),
-            ReplacementTransform(mobius[0:4].copy(), mertens[7]))
+            Write(mertens))
         self.wait(2)
 
-        transform_mobius = mobius.copy()
-        transform_mobius.to_corner(UR)
-        transform_mobius.shift(RIGHT*2 + UP * .75)
-        transform_mobius.scale(.6)
+        mertens.generate_target()
+        mertens.target.to_corner(UL)
 
-        transform_mertens = mertens.copy()
-        transform_mertens.shift(LEFT*3)
-
-        # mertens.generate_target()
-        # mertens.target.shift(LEFT*3)
 
         self.play(
-            Transform(mobius, transform_mobius),
-            Transform(mertens[0:8], transform_mertens),
-            LaggedStart(*map(FadeOutAndShiftDown, mertens_title))
-            )
-
-        cts_mert = TexMobject("M(", "x", ")", "=", "M", "(", r"\lfloor x \rfloor", "), \quad ", "x", "\in", "\R")
-        cts_mert.match_x(mertens[0:3], direction=LEFT)
-        for i in [0, 2, 4, 5, 7]:
-            cts_mert[i].set_color(GREEN)
-        cts_mert[7][1].set_color(WHITE)
-        for i in [1, 6, 8]:
-            cts_mert[i].set_color(RED)
-        cts_mert[10].set_color(YELLOW)
-
-        self.play(
-            Transform(mertens[0:4].copy(), cts_mert[0:4]),
-            Transform(mertens[0:4].copy(), cts_mert[4:8]),
-            run_time=2)
-        self.play(Transform(transform_mertens[8:].copy(), cts_mert[8:]))
+            FadeOutAndShiftDown(mertens_title),
+            MoveToTarget(mertens)
+        )
         self.wait(2)
-        self.play(Write(cts_mert))
 
-        conjec = TexMobject("|", "M(", "x", ")", "|", "<", "\sqrt{x}")
-        conjec.match_x(mertens[0:3], direction=LEFT)
-        conjec.shift(DOWN)
-        for i in [1, 3]:
-            conjec[i].set_color(GREEN)
-        for i in [2, -1]:
-            conjec[i].set_color(RED)
+        cts_mert_list = ["M(x)", "=", r"M( \lfloor x \rfloor)", r",\quad x \in \R^+"]
 
-        self.play(
-            Transform(cts_mert[0:4].copy(), conjec[0:5]))
+        cts_mert = TexMobject(*cts_mert_list)
+        cts_mert.next_to(mertens, direction=DOWN)
+        cts_mert.to_edge(LEFT)
+        cts_mert.set_color_by_tex("M(x)", GREEN)
+        cts_mert.set_color_by_tex(r"M( \lfloor x \rfloor)", GREEN)
+
+        self.play(Transform(copy.deepcopy(mertens), cts_mert))
+
+        conjec = TexMobject(r"|M(x)|", "<", "\sqrt{x}")
+        conjec.set_color_by_tex(r"|M(x)|", GREEN)
+        conjec.next_to(cts_mert, direction=DOWN, buff=.5)
+        conjec.to_edge(LEFT)
+        
         self.play(Write(conjec))
+
+        # TODO: Connection to RH and LLL
 
 
 class GraphMert(GraphScene):

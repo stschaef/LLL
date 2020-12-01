@@ -424,9 +424,8 @@ class GramSchmidt3D(ThreeDScene):
 
 
 
-# print(gram_schmidt(np.array([[2, 2, 3],
-#                              [1, 2, -1],
-#                              [1, 0, 0]])))
+# print(gram_schmidt(np.array([[201, 37],
+#                              [1648, 297]])))
 
 # Jeff Suzuki LLL Example 1
 # https://www.youtube.com/watch?v=n5MfVR77BTw
@@ -440,5 +439,5 @@ class GramSchmidt3D(ThreeDScene):
 #                     [46, 15, 3],
 #                     [32, 1, 1]])))
 
-# print(lll(np.array([[201, 37],
-#                     [1648, 297]])))
+print(lll(np.array([[47, 215],
+                    [95, 460]])))
