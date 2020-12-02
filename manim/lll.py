@@ -2,9 +2,6 @@ from manimlib.imports import *
 import numpy as np
 
 # TODO: Opening Quote
-# TODO: Outline of video
-# TODO: LLL Definitions (Size and Lovasz)
-# TODO: LLL psuedocode
 # TODO: Approxs of alg numbers
 # TODO: Crypto
 # TODO: Rework Mertens stuff
@@ -14,19 +11,145 @@ BASIS_COLOR = BLUE
 GS_COLOR = RED
 MU_COLOR = GREEN
 HIGHLIGHT_COLOR = YELLOW
+FUNCTION_COLOR = GOLD
 
-
-class Psuedocode(Scene):
-    def basis_str(self, n):
-        return r"\textbf{b}_" + str(n)
-    def gs_str(self, n):
-        return r"\textbf{b}^*_" + str(n)
+class Outline(Scene):
     def construct(self):
-        def set_colors_and_scale(obj):
+        lll_name = TextMobject(r"\underline{Lenstra-Lenstra-Lov\'asz (LLL) Lattice Basis Reduction}")
+        indents = [0, 0, 0, 1, 1, 1]
+        scenes = [
+            TextMobject(r"$\bullet$", r" The Algorithm"),
+            TextMobject(r"$\bullet$", r" Worked Examples"),
+            TextMobject(r"$\bullet$", r" Applications"),
+            TextMobject(r"$\bullet$", r" Algebraic Number Approximation"),
+            TextMobject(r"$\bullet$", r" Cryptography"),
+            TextMobject(r"$\bullet$", r" Mertens Conjecture"),
+        ]
+
+        lll_name.to_corner(UL)
+        self.play(Write(lll_name))
+        self.wait(2)
+
+        prev = None
+        tasks = []
+        for i, scene in enumerate(scenes):
+            if prev is None:
+                scene.next_to(lll_name, direction=DOWN)
+            else:
+                scene.next_to(prev, direction=DOWN)
+            scene.to_edge(LEFT)
+            scene.shift(RIGHT * indents[i])
+            prev = scene
+            tasks.append(Write(scene))
+        self.play(*tasks)
+
+
+class LLLReducedDef(Scene):
+    def construct(self):
+        def set_colors_and_scale(obj, scale=1):
+            obj.set_color_by_tex(r"k", HIGHLIGHT_COLOR)
             obj.set_color_by_tex(r"\textbf{b}", BASIS_COLOR)
             obj.set_color_by_tex(r"\textbf{b}^*", GS_COLOR)
             obj.set_color_by_tex(r"\mu", MU_COLOR)
-            obj.scale(.8)
+            obj.scale(scale)
+
+        lll_red = TextMobject("LLL-Reduced Basis")
+        size = TextMobject(r"$\bullet$ ", "Size Condition")
+        lov = TextMobject(r"$\bullet$ ", r"Lov\'asz Condition")
+
+        lll_red.to_corner(UL)
+        size.next_to(lll_red, direction=DOWN)
+        size.to_edge(LEFT)
+        size.shift(RIGHT)
+        lov.next_to(size, direction=DOWN)
+        lov.to_edge(LEFT)
+        lov.shift(RIGHT)
+
+        self.play(Write(lll_red))
+        self.play(Write(size), Write(lov))
+
+        size_cond = TexMobject(r"| \mu_{i, j}|", r"\leq", r".5", r"\text{ for }", r"0 \leq j < i \leq n")
+        lov_cond = TexMobject(r"\left| \textbf{b}^*_k \right|^2", r"\geq", r"\left(", "3/4", "-", r"\mu_{k, k - 1}", r" \right)^2 \cdot", r" \left| \textbf{b}^*_{k - 1} \right|^2", r"\text{ for }", r"k", r"= 1, \dots, n")
+        set_colors_and_scale(size_cond)
+        set_colors_and_scale(lov_cond)
+
+        lov.generate_target()
+        lov.target.shift(DOWN)
+        self.play(MoveToTarget(lov))
+
+        lov_cond.next_to(lov, direction=DOWN)
+        size_cond.next_to(size, direction=DOWN)
+        lov_cond.to_edge(LEFT)
+        lov_cond.shift(RIGHT*2)
+        size_cond.to_edge(LEFT)
+        size_cond.shift(RIGHT*2)
+
+        self.play(Write(size_cond))
+
+        self.wait(2)
+
+        self.play(Write(lov_cond))
+
+        self.wait(2)
+
+
+        delt = TexMobject(r"\delta", r"\in (1/4, 1]")
+        delt[0].set_color(GOLD)
+        delt.move_to(lov_cond[3].get_center())
+        delt.shift(DOWN*.75)
+        delt.scale(1.5)
+
+        a = lov_cond[3]
+        b = copy.deepcopy(a)
+        a.generate_target()
+        a.target.set_color(YELLOW)
+        a.target.shift(UP*.1)
+
+        self.play(MoveToTarget(a), ReplacementTransform(copy.deepcopy(lov_cond[3]), delt))
+
+        self.wait(2)
+
+        a.generate_target()
+        a.target.shift(DOWN*.1)
+        a.target.set_color(WHITE)
+
+        self.play(MoveToTarget(a), FadeOutAndShiftDown(delt))
+        self.wait(2)
+
+        short = TexMobject(r"|\textbf{b}_0|", r"\leq", r"2^{n/4} \text{Covol}(", r"L", ")^{1/(n+1)}")
+        short[-2].set_color(TEAL)
+        set_colors_and_scale(short)
+        short.to_edge(DOWN)
+        short.shift(UP*2)
+        self.play(Write(short))
+        self.wait(3)
+
+        short_text = TextMobject("Short!")
+        short_text.next_to(short, direction=RIGHT, buff=1)
+        short_text.set_color(YELLOW)
+        self.play(Write(short_text))
+        self.wait(2)
+
+        orthogonalish = TexMobject(r"\tup{\textbf{b}}{0}{n}", r"\text{ orthogonal-ish")
+        set_colors_and_scale(orthogonalish)
+        orthogonalish.next_to(short, direction=DOWN)
+        self.play(Write(orthogonalish))
+        self.wait(2)
+
+class Psuedocode(Scene):
+    def basis_str(self, n):
+        return r"\textbf{b}_{" + str(n) + "}"
+    def basis_str_list(self, n):
+        return [r"\textbf{b}_{" + str(n) + "}"]
+    def gs_str(self, n):
+        return r"\textbf{b}^*_{" + str(n) + "}"
+    def construct(self):
+        def set_colors_and_scale(obj, scale=1):
+            obj.set_color_by_tex(r"k", HIGHLIGHT_COLOR)
+            obj.set_color_by_tex(r"\textbf{b}", BASIS_COLOR)
+            obj.set_color_by_tex(r"\textbf{b}^*", GS_COLOR)
+            obj.set_color_by_tex(r"\mu", MU_COLOR)
+            obj.scale(scale)
 
         given = TexMobject(r"\text{Lattice }", "L", r"\text{ with basis }", self.basis_str(0) + r",\dots," + self.basis_str("n"))
         set_colors_and_scale(given)
@@ -44,7 +167,7 @@ class Psuedocode(Scene):
 
         self.wait(2)
 
-        mu_intro = TexMobject(r"\text{Gram-Schmidt Coefficients, } ", r"\mu_{i, j}", "= {", self.basis_str("i"), r" \cdot", self.gs_str("j"), r"\over", self.gs_str("j"), r" \cdot", self.gs_str("j"), r"}")
+        mu_intro = TexMobject(r"\text{Gram-Schmidt coefficients, } ", r"\mu_{i, j}", "= {", self.basis_str("i"), r" \cdot", self.gs_str("j"), r"\over", self.gs_str("j"), r" \cdot", self.gs_str("j"), r"}")
         set_colors_and_scale(mu_intro)
         mu_intro.next_to(gs, direction=DOWN)
         mu_intro.to_edge(LEFT)
@@ -53,7 +176,7 @@ class Psuedocode(Scene):
 
         self.wait(2)
 
-        k_list = [r"\text{Index }", r"\text{of working vector }", r"k"]
+        k_list = [r"\text{Index }", r"\text{of current vector }", r"k"]
         k_tex = TexMobject(*k_list)
         k_tex[-1].set_color(HIGHLIGHT_COLOR)
         set_colors_and_scale(k_tex)
@@ -70,9 +193,7 @@ class Psuedocode(Scene):
         set_colors_and_scale(idx_k)
         idx_k.move_to(k_tex)
 
-
         self.play(ReplacementTransform(k_tex, idx_k))
-
 
         basis = copy.deepcopy(given[-1])
         gs_vecs = copy.deepcopy(gs[-1])
@@ -84,26 +205,71 @@ class Psuedocode(Scene):
 
         self.play(FadeOut(gs), FadeOut(given), FadeOut(mu_intro))
 
-        basis.generate_target()
-        basis.target.to_corner(UL)
+        variables = TextMobject(r"\underline{Variables}")
+        set_colors_and_scale(variables)
+        variables.to_corner(UR)
         
+        vert_buff = .5
+
+        basis.generate_target()
+        basis.target.next_to(variables, direction=DOWN, buff=vert_buff)
+
         gs_vecs.generate_target()
-        gs_vecs.target.next_to(basis.target, direction=RIGHT, buff=2)
+        gs_vecs.target.next_to(basis.target, direction=DOWN, buff=vert_buff)
 
         mu_ij.generate_target()
-        mu_ij.target.next_to(gs_vecs.target, direction=RIGHT, buff=2)
+        mu_ij.target.next_to(gs_vecs.target, direction=DOWN, buff=vert_buff)
 
         idx_k.generate_target()
-        idx_k.target.next_to(mu_ij.target, direction=RIGHT, buff=2)
+        idx_k.target.next_to(mu_ij.target, direction=DOWN, buff=vert_buff)
 
-        self.play(*[MoveToTarget(a) for a in [basis, gs_vecs, mu_ij, idx_k]])
+        self.play(Write(variables), *[MoveToTarget(a) for a in [basis, gs_vecs, mu_ij, idx_k]])
+
+        self.wait(2)
+
+        def color_and_scale_code(obj):
+            obj.set_color_by_tex(r"\textbf{b}", BASIS_COLOR)
+            obj.set_color_by_tex(r"\textbf{b}^*", GS_COLOR)
+            obj.set_color_by_tex(r"\mu", MU_COLOR)
+            obj.scale(1)
+
+        indents = [0, 0, 1, 2, 3, 3, 1, 2, 1, 2, 2, 2, 0]
+        code = [TexMobject(r"k", r"= 1"),
+                TexMobject(r"\textbf{while }", "k", r"\leq n:"),
+                    TexMobject(r"\textbf{for }", "j", r"\textbf{ from }", r"k", r"- 1", r" \textbf{ to } ", "0:"),
+                        TexMobject(r"\textbf{if }", r"\textbf{not }", r"\text{SizeCondition}", "(", "k", ",j):"),
+                            TexMobject(self.basis_str("k"), "=", self.basis_str("k"), r" - ", r"\lfloor \mu_{k,j} \rceil", self.basis_str("j")),
+                            TexMobject(r"\text{UpdateGramSchmidt}", "(", self.basis_str("0") + r",\dots," + self.basis_str("n"), ")"),
+                    TexMobject(r"\textbf{if }", r"\text{Lov\'aszCondition}", "(", "k", "):"),
+                        TexMobject(r"k", "=", "k", "+ 1"),
+                    TexMobject(r"\textbf{else}", r"\text{:}"),
+                        TexMobject(r"\text{Swap}", "(", self.basis_str("k"), ",", self.basis_str("k - 1"), ")"),
+                        TexMobject(r"\text{UpdateGramSchmidt}", "(", self.basis_str("0") + r",\dots," + self.basis_str("n"), ")"),
+                        TexMobject(r"k", "=", r"\text{Max}(", "k", "- 1", ", 1)"),
+                TexMobject(r"\textbf{return }", self.basis_str("0") + r",\dots," + self.basis_str("n"))]
+
+        code[3].set_color_by_tex("Condition", FUNCTION_COLOR)
+        code[5].set_color_by_tex("GramSchmidt", FUNCTION_COLOR)
+        code[6].set_color_by_tex("Condition", FUNCTION_COLOR)
+        code[9].set_color_by_tex("Swap", FUNCTION_COLOR)
+        code[10].set_color_by_tex("GramSchmidt", FUNCTION_COLOR)
+        code[11].set_color_by_tex("Max", FUNCTION_COLOR)
+
+        code_scale = .8
+        prev = None 
+        for i, line in enumerate(code):
+            set_colors_and_scale(line, scale=code_scale)
+            if prev is None:
+                line.to_corner(UL)
+            else:
+                line.next_to(prev, direction=DOWN, buff=0.2)
+            line.to_edge(LEFT)
+            line.shift(RIGHT*indents[i])
+            self.play(Write(line))
+            prev = line
+        self.wait(2)
 
 
-        
-
-        
-
-# TODO:Work out colors
 class LLLSymbolic2D(Scene):
     def make_vec(self, coords, color_in=WHITE):
         coord_str = ""
@@ -523,31 +689,268 @@ class LLLSymbolic3D(LLLSymbolic2D):
                                        [3, 5, 6]]))
         self.lll_anim()
     
-        
-        
+class AlgebraicApprox(Scene):
+    def polynomial_string(self, poly_list):
+        out = ""
+        for i, coeff in enumerate(poly_list):
+            coeff = int(coeff)
+            if coeff != 0:
+                sign = "+"
+                if coeff < 0:
+                    sign = "-"
+                if i == 0:
+                    out += str(coeff)
+                    continue
+                coeff_str = abs(coeff)
+                if abs(coeff) == 1:
+                    coeff_str = ""
+                out += " {} {}x^{}".format(sign, coeff_str, i)
+        return out
 
+    def minpoly(self, alpha, deg, prec=10**6):
+        A = list(np.identity(deg + 1))
+        A[0] = np.concatenate((A[0], [prec]), axis=None)
+        for i in range(1, deg + 1):
+            A[i] = np.concatenate((A[i], [np.floor(prec * alpha**i)]), axis=None)
+
+        # A.append(np.zeros(len(A[0])))
+        A = np.array(A)
+        B = lll(A)
+        b_1 = A[0][:-1]
         
+        print(b_1)
+        print(polynomial_string(b_1))
+
+        return b_1
+
+    def check(self, poly_list, alpha):
+        return sum([coeff * alpha**i for i, coeff in enumerate(poly_list)])
+
+    def construct(self):
+        line = NumberLine(x_min=1.414211,
+                          x_max=1.414215,
+                          unit_size=5000000,
+                          number_at_center=1.414213,
+                          include_numbers=True,
+                          tick_frequency=.000001,
+                          numbers_to_show=[1.414211 + i * .000001 for i in range(21)],
+                          decimal_number_config={
+                            "num_decimal_places": 6,
+                          })
+        line.to_edge(UP)
+        self.play(ShowCreation(line))
+        self.wait(2)
+
+        a = str(np.sqrt(2))[:8]
+        alpha_val = float(a)
+
+        sqrt_obj = TexMobject(r"\sqrt{2}", "= ", str(np.sqrt(2)) + r" \dots")
+        sqrt_obj.scale(.9)
+        sqrt_obj.next_to(line, direction=DOWN)
+        sqrt_obj[0].set_color(YELLOW)
+        sqrt_obj.to_edge(LEFT)
 
 
-        
+        self.play(Write(sqrt_obj))
+        self.wait(2)
 
-        
-# def polynomial_string(poly_list):
-#     out = ""
-#     for i, coeff in enumerate(poly_list):
-#         coeff = int(coeff)
-#         if coeff != 0:
-#             sign = "+"
-#             if coeff < 0:
-#                 sign = "-"
-#             if i == 0:
-#                 out += str(coeff)
-#                 continue
-#             coeff_str = abs(coeff)
-#             if abs(coeff) == 1:
-#                 coeff_str = ""
-#             out += " {} {}x^{}".format(sign, coeff_str, i)
-#     return out
+        sqrt_arrow = Arrow()
+        psqrt2 = line.n2p(np.sqrt(2))
+        sqrt_arrow.put_start_and_end_on(psqrt2 + UP, psqrt2)
+        sqrt_arrow.set_color(YELLOW)
+        self.play(Write(sqrt_arrow))
+        self.wait(1)
+
+        alpha_obj = TexMobject(r"\alpha", "=", a)
+        alpha_obj.scale(.9)
+        alpha_obj[0].set_color(RED)
+        alpha_obj.next_to(sqrt_obj, direction=RIGHT, buff=1)
+
+        self.play(Transform(copy.deepcopy(sqrt_obj), alpha_obj))
+        self.wait(2)
+
+        alpha_arrow = Arrow()
+        p_alpha = line.n2p(alpha_val)
+        alpha_arrow.put_start_and_end_on(p_alpha + UP, p_alpha)
+        alpha_arrow.set_color(RED)
+        self.play(Write(alpha_arrow))
+
+
+        goal = TexMobject(r"\text{Goal}", r"\text{: find polynomial }", "f", r"\text{ such that }", r"f(", r"\alpha", r")", r"\text{ small}")
+        for i in [2, 4, 6]:
+            goal[i].set_color(GREEN)
+        goal[5].set_color(RED)
+        goal[0].set_color(YELLOW)
+        goal.scale(.85)
+        goal.next_to(sqrt_obj, direction=DOWN)
+        goal.to_edge(LEFT)
+        self.play(Write(goal))
+        self.wait(5)
+        self.play(FadeOutAndShiftDown(goal))
+
+        def to_matrix(arr):
+            out = r"\begin{bmatrix} "
+            n = len(arr[0])
+            m = len(arr)
+            for i, line in enumerate(arr):
+                for j, elt in enumerate(line):
+                    if i == m - 1 and isinstance(line, str):
+                        out += line
+                        out += r" \end{bmatrix}"
+                        return out
+                    if j == n - 1:
+                        if i == m - 1:
+                            out += str(elt)
+                        else:
+                            out += str(elt) + r" \\ "
+                    else:
+                        out += str(elt) + r" & "
+            out += r" \end{bmatrix}"
+            return out
+
+        mat = np.array([["1", "0", "0", r"10^6"],
+                        ["0", "1", "0", r"\lfloor 10^6 \alpha \rfloor"],
+                        ["0", "0", "1", r"\lfloor 10^6 \alpha^2 \rfloor"]])
+
+
+
+        mat_t = TexMobject(to_matrix(mat.T))
+        mat_t.scale(.85)
+        mat_t.next_to(sqrt_obj, direction=DOWN)
+        mat_t.to_edge(LEFT)
+        self.play(Write(mat_t))
+        self.wait(2)
+
+        vecs = [TexMobject(to_matrix(row.T)) for row in mat]
+        prev = None
+        for vec in vecs:
+            vec.scale(.85)
+            if prev is None:
+                vec.next_to(sqrt_obj, direction=DOWN)
+                vec.to_edge(LEFT)
+            else:
+                vec.next_to(prev)
+            prev = vec
+        vecs_group = VGroup(*vecs)
+        self.play(ReplacementTransform(mat_t, vecs_group))
+
+        basis_labels = [TexMobject(r"\textbf{b}_" + str(i), "=") for i in range(3)]
+
+        prev = None
+        tasks = []
+        for vec, label in zip(vecs, basis_labels):
+            vec.generate_target()
+            vec.target.set_color(BLUE)
+            label.set_color(BLUE)
+
+            if prev is None:
+                label.move_to(vecs[0].get_center())
+                vec.target.next_to(label)
+            else:
+                label.next_to(prev[0].target, buff=.5)
+                vec.target.next_to(label)
+            prev = (vec, label)
+            tasks.append(Write(label))
+            tasks.append(MoveToTarget(vec))
+
+        self.play(*tasks)
+            
+
+
+        # basis_mat = TexMobject(r"\begin{bmatrix} \textbf{b}_0 & \textbf{b}_1 & \textbf{b}_2 \end{bmatrix}")
+        # basis_mat.set_color(BLUE)
+        # equal = TexMobject("=")
+        # equal.next_to(basis_mat, direction=LEFT)
+        # basis_display = VGroup(equal, basis_mat)
+        # # basis_display.scale(.85)
+        # basis_display.next_to(mat_t)
+        # self.play(Write(basis_display))
+
+
+
+
+
+##############################################################################
+# ---------------------------------- Test ---------------------------------- #
+##############################################################################
+
+
+def sq_norm(v):
+    return np.dot(v, v)
+
+def gram_schmidt(basis):
+    """Returns the Gram-Schmidt orthogonalization of a basis.
+
+    basis: list of linearly independent vectors
+    """
+    orthog = np.array([None for _ in basis])
+    mu = np.array([[None for _ in basis] for _ in basis])
+    
+    orthog[0] = basis[0]
+
+    for i in range(1, len(basis)):
+        for j in range(i):
+            mu[i][j] = np.dot(basis[i], orthog[j])/sq_norm(orthog[j])
+        orthog[i] = basis[i]
+        for j in range(i):
+            orthog[i] = orthog[i] - mu[i][j] * orthog[j]
+    return orthog
+
+def get_mus(basis, orthog):
+    assert(len(basis) == len(orthog))
+    mu = np.array([[None for _ in basis] for _ in basis])
+
+    for i, b_i in enumerate(basis):
+        for j, b_j_star in enumerate(orthog):
+            # print(sq_norm(b_j_star))
+            mu[i][j] = np.dot(b_i, b_j_star)/sq_norm(b_j_star)
+
+    return mu
+
+def lll(basis, delta=.75):
+    """Returns an LLL-reduced basis.
+
+    basis: list of linearly independent vectors
+    delta: commonly delta = 3/4
+    """
+    orthog = gram_schmidt(basis)
+    mu = get_mus(basis, orthog)
+    k = 1
+    while k < len(basis):
+        for j in range(k - 1, -1, -1):
+            # Size condition
+            if np.abs(mu[k][j]) > .5:
+                basis[k] = basis[k] - np.rint(mu[k, j]) * basis[j]
+                orthog = gram_schmidt(basis)
+                mu = get_mus(basis, orthog)
+        # Lovasz condition
+        if sq_norm(orthog[k]) >= (delta - mu[k][k - 1]**2) * sq_norm(orthog[k - 1]):
+            k += 1
+        else:
+            temp = copy.deepcopy(basis[k])
+            basis[k] = copy.deepcopy(basis[k - 1])
+            basis[k - 1] = temp
+            orthog = gram_schmidt(basis)
+            mu = get_mus(basis, orthog)
+            k = max(k - 1, 1)
+    return basis
+
+def polynomial_string(poly_list):
+    out = ""
+    for i, coeff in enumerate(poly_list):
+        coeff = int(coeff)
+        if coeff != 0:
+            sign = "+"
+            if coeff < 0:
+                sign = "-"
+            if i == 0:
+                out += str(coeff)
+                continue
+            coeff_str = abs(coeff)
+            if abs(coeff) == 1:
+                coeff_str = ""
+            out += " {} {}x^{}".format(sign, coeff_str, i)
+    return out
 
 def minpoly(alpha, deg, prec=10**6):
     A = list(np.identity(deg + 1))
@@ -560,7 +963,7 @@ def minpoly(alpha, deg, prec=10**6):
     B = lll(A)
     b_1 = A[0][:-1]
     
-    print(b_1)
+    # print(b_1)
     print(polynomial_string(b_1))
 
     return b_1
@@ -569,7 +972,7 @@ def check(poly_list, alpha):
     return sum([coeff * alpha**i for i, coeff in enumerate(poly_list)])
         
 
-# a = 1.348006154
-# b = minpoly(a, 6, prec=10**(len(str(a)) - 2)) 
+# a = 1.414213
+# b = minpoly(a, 2, prec=10**(len(str(a)) - 2)) 
 # print(check(b, a))      
         
