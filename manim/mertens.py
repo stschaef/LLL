@@ -77,10 +77,20 @@ class definitions(Scene):
         conjec.set_color_by_tex(r"|M(x)|", GREEN)
         conjec.next_to(cts_mert, direction=DOWN, buff=.5)
         conjec.to_edge(LEFT)
+
+        self.wait(2)
         
         self.play(Write(conjec))
 
-        # TODO: Connection to RH and LLL
+        self.wait(2)
+
+        title = TextMobject("Mertens Conjecture")
+        title.next_to(conjec, buff=1)
+        title.set_color(YELLOW)
+        self.play(Write(title))
+
+class RH(Scene):
+    def construct(self)
 
 
 class GraphMert(GraphScene):

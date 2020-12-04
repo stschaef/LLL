@@ -245,7 +245,7 @@ class Psuedocode(Scene):
                     TexMobject(r"\textbf{else}", r"\text{:}"),
                         TexMobject(r"\text{Swap}", "(", self.basis_str("k"), ",", self.basis_str("k - 1"), ")"),
                         TexMobject(r"\text{UpdateGramSchmidt}", "(", self.basis_str("0") + r",\dots," + self.basis_str("n"), ")"),
-                        TexMobject(r"k", "=", r"\text{Max}(", "k", "- 1", ", 1)"),
+                        TexMobject(r"k", "=", r"\text{Max}", "(", "k", "- 1", ", 1)"),
                 TexMobject(r"\textbf{return }", self.basis_str("0") + r",\dots," + self.basis_str("n"))]
 
         code[3].set_color_by_tex("Condition", FUNCTION_COLOR)
@@ -283,9 +283,11 @@ class LLLSymbolic2D(Scene):
 
     def init_vars(self, basis=None):
         self.delta = .75
-
+        
         self.basis = np.array([[47, 215, 0],
                                [95, 460, 0]])
+
+        self.basis_orig = copy.deepcopy(self.basis)
         if basis is not None:
             self.basis = basis
         else:
@@ -332,8 +334,8 @@ class LLLSymbolic2D(Scene):
         a.target.to_edge(LEFT)
         self.play(MoveToTarget(a))
 
-        r = SurroundingRectangle(a, color=WHITE, buff=.19)
-        self.play(ShowCreation(r))
+        self.r = SurroundingRectangle(a, color=WHITE, buff=.19)
+        self.play(ShowCreation(self.r))
 
         self.k = 1
         self.k_tex = TexMobject("k", "=", str(self.k))
@@ -444,7 +446,7 @@ class LLLSymbolic2D(Scene):
         self.wait(1)
         self.play(FadeOutAndShiftDown(size))
 
-        less_than = TextMobject(" < .5")
+        less_than = TexMobject(r" \leq .5")
         less_than.next_to(mu_display)
         self.play(Write(less_than))
         
@@ -606,7 +608,7 @@ class LLLSymbolic2D(Scene):
 
             swap = TexMobject(r"\text{Swap}(", r"\textbf{b}_" + str(self.k), r",",  r"\textbf{b}_" + str(self.k - 1), r")")
             self.set_obj_colors_by_tex(swap)
-            max_k_list = [r"k" , r"= \text{max}(", "k - 1", ", 1)"]
+            max_k_list = [r"k" , r"= \text{max}(", "k ", "- 1", ", 1)"]
             max_k = TexMobject(*max_k_list)
             max_k[0].set_color(HIGHLIGHT_COLOR)
             swap.next_to(a, direction=DOWN)
@@ -638,6 +640,16 @@ class LLLSymbolic2D(Scene):
 
             self.play(FadeOutAndShift(a), FadeOutAndShift(xmark), FadeOutAndShift(swap), FadeOutAndShift(b))
 
+    def compare_orig(self):
+        disp = VGroup(*self.basis_displays)
+        rect = SurroundingRectangle(disp, color=WHITE, buff=.19)
+        self.play(*[FadeOutAndShift(w) for w in self.gs_displays], FadeOutAndShift(self.k_tex))
+        self.play(Transform(self.r, rect))
+        for orig, new in zip(self.basis_orig, self.basis_objs):
+            old_basis_obj = self.make_vec(orig, color_in=GREY_BROWN)
+            old_basis_obj.next_to(new, direction=DOWN, buff=1)
+            self.play(Write(old_basis_obj))
+        
 
     def lll_anim(self):
         self.update_gs()
@@ -646,6 +658,7 @@ class LLLSymbolic2D(Scene):
             for j in range(self.k - 1, -1, -1):
                 self.size_condition_anim(j)
             self.lovasz_anim()
+        self.compare_orig()
                 
 
     def lll(self, basis, delta=.75):
@@ -690,42 +703,6 @@ class LLLSymbolic3D(LLLSymbolic2D):
         self.lll_anim()
     
 class AlgebraicApprox(Scene):
-    def polynomial_string(self, poly_list):
-        out = ""
-        for i, coeff in enumerate(poly_list):
-            coeff = int(coeff)
-            if coeff != 0:
-                sign = "+"
-                if coeff < 0:
-                    sign = "-"
-                if i == 0:
-                    out += str(coeff)
-                    continue
-                coeff_str = abs(coeff)
-                if abs(coeff) == 1:
-                    coeff_str = ""
-                out += " {} {}x^{}".format(sign, coeff_str, i)
-        return out
-
-    def minpoly(self, alpha, deg, prec=10**6):
-        A = list(np.identity(deg + 1))
-        A[0] = np.concatenate((A[0], [prec]), axis=None)
-        for i in range(1, deg + 1):
-            A[i] = np.concatenate((A[i], [np.floor(prec * alpha**i)]), axis=None)
-
-        # A.append(np.zeros(len(A[0])))
-        A = np.array(A)
-        B = lll(A)
-        b_1 = A[0][:-1]
-        
-        print(b_1)
-        print(polynomial_string(b_1))
-
-        return b_1
-
-    def check(self, poly_list, alpha):
-        return sum([coeff * alpha**i for i, coeff in enumerate(poly_list)])
-
     def construct(self):
         line = NumberLine(x_min=1.414211,
                           x_max=1.414215,
@@ -745,11 +722,16 @@ class AlgebraicApprox(Scene):
         alpha_val = float(a)
 
         sqrt_obj = TexMobject(r"\sqrt{2}", "= ", str(np.sqrt(2)) + r" \dots")
-        sqrt_obj.scale(.9)
-        sqrt_obj.next_to(line, direction=DOWN)
-        sqrt_obj[0].set_color(YELLOW)
-        sqrt_obj.to_edge(LEFT)
+        
+        sqrt_obj[0].set_color(GREEN)
 
+        alpha_obj = TexMobject(r"\alpha", "=", a)
+        alpha_obj[0].set_color(RED)
+        alpha_obj.next_to(sqrt_obj, buff=2)
+        
+        numbers_at_top = VGroup(sqrt_obj, alpha_obj)
+        numbers_at_top.next_to(line, direction=DOWN)
+        numbers_at_top.set_x(0)
 
         self.play(Write(sqrt_obj))
         self.wait(2)
@@ -757,14 +739,10 @@ class AlgebraicApprox(Scene):
         sqrt_arrow = Arrow()
         psqrt2 = line.n2p(np.sqrt(2))
         sqrt_arrow.put_start_and_end_on(psqrt2 + UP, psqrt2)
-        sqrt_arrow.set_color(YELLOW)
+        sqrt_arrow.set_color(GREEN)
         self.play(Write(sqrt_arrow))
         self.wait(1)
 
-        alpha_obj = TexMobject(r"\alpha", "=", a)
-        alpha_obj.scale(.9)
-        alpha_obj[0].set_color(RED)
-        alpha_obj.next_to(sqrt_obj, direction=RIGHT, buff=1)
 
         self.play(Transform(copy.deepcopy(sqrt_obj), alpha_obj))
         self.wait(2)
@@ -773,101 +751,286 @@ class AlgebraicApprox(Scene):
         p_alpha = line.n2p(alpha_val)
         alpha_arrow.put_start_and_end_on(p_alpha + UP, p_alpha)
         alpha_arrow.set_color(RED)
-        self.play(Write(alpha_arrow))
+        self.play(Transform(copy.deepcopy(sqrt_arrow), alpha_arrow))
 
 
         goal = TexMobject(r"\text{Goal}", r"\text{: find polynomial }", "f", r"\text{ such that }", r"f(", r"\alpha", r")", r"\text{ small}")
         for i in [2, 4, 6]:
-            goal[i].set_color(GREEN)
+            goal[i].set_color(YELLOW)
         goal[5].set_color(RED)
-        goal[0].set_color(YELLOW)
-        goal.scale(.85)
-        goal.next_to(sqrt_obj, direction=DOWN)
-        goal.to_edge(LEFT)
+        goal[0].set_color(BLUE_B)
         self.play(Write(goal))
         self.wait(5)
         self.play(FadeOutAndShiftDown(goal))
 
-        def to_matrix(arr):
-            out = r"\begin{bmatrix} "
-            n = len(arr[0])
-            m = len(arr)
-            for i, line in enumerate(arr):
-                for j, elt in enumerate(line):
-                    if i == m - 1 and isinstance(line, str):
-                        out += line
-                        out += r" \end{bmatrix}"
-                        return out
-                    if j == n - 1:
-                        if i == m - 1:
-                            out += str(elt)
-                        else:
-                            out += str(elt) + r" \\ "
-                    else:
-                        out += str(elt) + r" & "
-            out += r" \end{bmatrix}"
-            return out
-
-        mat = np.array([["1", "0", "0", r"10^6"],
-                        ["0", "1", "0", r"\lfloor 10^6 \alpha \rfloor"],
-                        ["0", "0", "1", r"\lfloor 10^6 \alpha^2 \rfloor"]])
+        str_mat = np.array([["1", "0", "0", r"10^6"],
+                            ["0", "1", "0", r"\lfloor 10^6 \alpha \rfloor"],
+                            ["0", "0", "1", r"\lfloor 10^6 \alpha^2 \rfloor"]])
 
 
+        mat = Matrix(str_mat.T, h_buff=2)
+        self.play(Write(mat))
+        self.wait(3)
 
-        mat_t = TexMobject(to_matrix(mat.T))
-        mat_t.scale(.85)
-        mat_t.next_to(sqrt_obj, direction=DOWN)
-        mat_t.to_edge(LEFT)
-        self.play(Write(mat_t))
+        num_mat = np.array([[1, 0, 0, int(10**6)],
+                            [0, 1, 0, int(np.floor(10**6 * alpha_val)) ],
+                            [0, 0, 1, int(np.floor(10**6 * alpha_val**2))]])
+        num_mat_obj = Matrix(num_mat.T, h_buff=2)
+        self.play(Transform(mat, num_mat_obj))
+        self.wait(3)
+
+        lll_mat = lll(num_mat)
+        reduced = Matrix(lll_mat.T)
+        reduced.move_to(mat.get_center())
+        reduced.set_column_colors(BLUE, GREY_BROWN, GREY_BROWN)
+        self.play(Transform(mat, reduced))
+        self.wait(3)
+
+        first_vec = mat.get_columns()[0]
+        first_vec.set_color(BLUE)
+
+        bracket_pair = TexMobject("\\big[", "\\big]")
+        bracket_pair.scale(2)
+        bracket_pair.stretch_to_fit_height(
+            first_vec.get_height() + 2 * MED_SMALL_BUFF
+        )
+        l_bracket, r_bracket = bracket_pair.split()
+        l_bracket.next_to(first_vec, LEFT, MED_SMALL_BUFF)
+        r_bracket.next_to(first_vec, RIGHT, MED_SMALL_BUFF)
+        brackets = VGroup(l_bracket, r_bracket)
+        poly_col = VGroup(brackets, first_vec)
+
+        self.play(FadeOutAndShift(mat.get_columns()[1:]), FadeOutAndShift(mat.get_brackets()))
+        # mat = first_vec
+        poly_col.generate_target()
+        poly_col.target.set_x(0)
+
+
+        self.play(Write(brackets), MoveToTarget(poly_col))
         self.wait(2)
 
-        vecs = [TexMobject(to_matrix(row.T)) for row in mat]
-        prev = None
-        for vec in vecs:
-            vec.scale(.85)
-            if prev is None:
-                vec.next_to(sqrt_obj, direction=DOWN)
-                vec.to_edge(LEFT)
+        shortest = TextMobject(r"Shortest vector in \\ reduced basis")
+        shortest.next_to(poly_col, direction=LEFT, buff=1)
+
+        self.play(Write(shortest))
+        self.wait(3)
+        self.play(FadeOut(shortest))
+
+        for i, elt in enumerate(first_vec):
+            if i == 0:
+                x_pow = TexMobject("1")
+            elif i == len(first_vec) - 1:
+                continue
             else:
-                vec.next_to(prev)
-            prev = vec
-        vecs_group = VGroup(*vecs)
-        self.play(ReplacementTransform(mat_t, vecs_group))
-
-        basis_labels = [TexMobject(r"\textbf{b}_" + str(i), "=") for i in range(3)]
-
-        prev = None
-        tasks = []
-        for vec, label in zip(vecs, basis_labels):
-            vec.generate_target()
-            vec.target.set_color(BLUE)
-            label.set_color(BLUE)
-
-            if prev is None:
-                label.move_to(vecs[0].get_center())
-                vec.target.next_to(label)
-            else:
-                label.next_to(prev[0].target, buff=.5)
-                vec.target.next_to(label)
-            prev = (vec, label)
-            tasks.append(Write(label))
-            tasks.append(MoveToTarget(vec))
-
-        self.play(*tasks)
+                x_pow = TexMobject("x^" + str(i))
             
+            x_pow.set_color(GREY)
+            x_pow.move_to(elt.get_center())
+            x_pow.set_x(1.5)
+            self.play(Write(x_pow))
+
+        self.wait(3)
+
+        poly_vec = lll_mat[0]
+        min_poly = TexMobject(r"f(x) = ", polynomial_string(poly_vec[:-1]))
+        min_poly.to_edge(DOWN)
+        min_poly.scale(2)
+        min_poly.set_color(YELLOW)
+        self.play(Write(min_poly))
+        self.wait(2)
+
+class AlgebraicApproxProblem(Scene):
+    def construct(self):
+        a = 3.105843
+        b = minpoly(a, 5, prec=10**(len(str(a)) - 2)) 
+        # print(check(b, a))
+
+        c = 3.1058435015977
+        d = minpoly(c, 5, prec=10**(len(str(c)) - 2)) 
+        # print(check(d, c))      
+
+        a = str(289**(1/5))[:8]
+        alpha_val = float(a)
+        print(a)
+
+        sqrt_obj = TexMobject(r"17^{(2/5)}", "= ", str(289**(1/5)) + r" \dots")
+        sqrt_obj[0].set_color(GREEN)
+
+        alpha_obj = TexMobject(r"\alpha", "=", a)
+        alpha_obj[0].set_color(RED)
+        alpha_obj.next_to(sqrt_obj, buff=2)
+        
+        numbers_at_top = VGroup(sqrt_obj, alpha_obj)
+        numbers_at_top.to_edge(UP)
+        numbers_at_top.set_x(0)
+
+        self.play(Write(sqrt_obj))
+        self.wait(1)
+
+        self.play(Transform(copy.deepcopy(sqrt_obj), alpha_obj))
+        self.wait(1)
+
+        str_mat = np.array([["1", "0", "0", "0", "0", "0", r"10^6"],
+                            ["0", "1", "0", "0", "0", "0", r"\lfloor 10^6 \alpha \rfloor"],
+                            ["0", "0", "1", "0", "0", "0", r"\lfloor 10^6 \alpha^2 \rfloor"],
+                            ["0", "0", "0", "1", "0", "0", r"\lfloor 10^6 \alpha^3 \rfloor"],
+                            ["0", "0", "0", "0", "1", "0", r"\lfloor 10^6 \alpha^4 \rfloor"],
+                            ["0", "0", "0", "0", "0", "1", r"\lfloor 10^6 \alpha^5 \rfloor"]]) 
+
+        mat = Matrix(str_mat.T, h_buff=2)
+
+        num_mat = np.array([[1, 0, 0, 0, 0, 0, int(10**6)],
+                            [0, 1, 0, 0, 0, 0, int(np.floor(10**6 * alpha_val)) ],
+                            [0, 0, 1, 0, 0, 0, int(np.floor(10**6 * alpha_val**2))],
+                            [0, 0, 0, 1, 0, 0, int(np.floor(10**6 * alpha_val**3))],
+                            [0, 0, 0, 0, 1, 0, int(np.floor(10**6 * alpha_val**4))],
+                            [0, 0, 0, 0, 0, 1, int(np.floor(10**6 * alpha_val**5))]])
+
+        num_mat_obj = Matrix(num_mat.T, h_buff=2)
+
+        lll_mat = lll(num_mat)
+        reduced = Matrix(lll_mat.T, v_buff=.5)
+        reduced.set_column_colors(BLUE, GREY_BROWN, GREY_BROWN, GREY_BROWN, GREY_BROWN, GREY_BROWN)
+        self.play(Write(reduced))
+        self.wait(1)
+
+        first_vec = reduced.get_columns()[0]
+        first_vec.set_color(BLUE)
+
+        bracket_pair = TexMobject("\\big[", "\\big]")
+        bracket_pair.scale(2)
+        bracket_pair.stretch_to_fit_height(
+            first_vec.get_height() + 2 * MED_SMALL_BUFF
+        )
+        l_bracket, r_bracket = bracket_pair.split()
+        l_bracket.next_to(first_vec, LEFT, MED_SMALL_BUFF)
+        r_bracket.next_to(first_vec, RIGHT, MED_SMALL_BUFF)
+        brackets = VGroup(l_bracket, r_bracket)
+        poly_col = VGroup(brackets, first_vec)
+
+        self.play(FadeOutAndShift(reduced.get_columns()[1:]), FadeOutAndShift(reduced.get_brackets()))
+        # mat = first_vec
+        poly_col.generate_target()
+        poly_col.target.set_x(0)
+
+        self.play(Write(brackets), MoveToTarget(poly_col))
+        self.wait(2)
+
+        shortest = TextMobject(r"Shortest vector in \\ reduced basis")
+        shortest.next_to(poly_col, direction=LEFT, buff=1)
+
+        self.play(Write(shortest))
+        self.wait(3)
+        self.play(FadeOut(shortest))
+
+        tasks = []
+        powers = []
+        for i, elt in enumerate(first_vec):
+            if i == 0:
+                x_pow = TexMobject("1")
+            elif i == len(first_vec) - 1:
+                continue
+            else:
+                x_pow = TexMobject("x^" + str(i))
+            
+            x_pow.set_color(GREY)
+            x_pow.move_to(elt.get_center())
+            x_pow.set_x(1.5)
+            powers.append(x_pow)
+            tasks.append(Write(x_pow))
+        self.play(*tasks)
+
+        self.wait(3)
+
+        poly_vec = lll_mat[0]
+        print("*" * 15)
+        print(poly_vec)
+        min_poly = TexMobject(r"f(x) = ", polynomial_string(poly_vec[:-1]))
+        min_poly.to_edge(DOWN)
+        min_poly.set_color(YELLOW)
+        self.play(Write(min_poly))
+        self.wait(2)
+        
+        min_poly.generate_target()
+        min_poly.target.next_to(numbers_at_top, direction=DOWN)
+
+        self.play(*[FadeOut(obj) for obj in [*powers, poly_col]], MoveToTarget(min_poly))
+
+        self.wait(2)
+
+        xmark = TexMobject(r"\text{\sffamily X}")
+        xmark.scale(2)
+        xmark.next_to(min_poly, direction=RIGHT)
+        xmark.set_color(RED)
+        self.play(Write(xmark))
+        self.wait(1)
+
+        real_min_poly = TexMobject(r"f(x) = x^5 - 17^2")
+        real_min_poly.set_color(RED)
+        real_min_poly.next_to(min_poly, direction=DOWN)
+        self.play(Write(real_min_poly))
+        self.wait(2)
+        not_enough = TextMobject(r"Not enough digits!")
+        not_enough.scale(2)
+        not_enough.next_to(real_min_poly, direction=DOWN, buff=1)
+        self.play(Write(not_enough))
+        self.wait(2)
+        repeat = TexMobject(r"\text{Repeat with }", r"\alpha", " = 3.1058435015977")
+        repeat.next_to(not_enough, direction=DOWN)
+        repeat[1].set_color(RED)
+        self.play(Write(repeat))
+        self.wait(1)
+
+class NotEnoughDigits(Scene):
+    def construct(self):
+        a = str(289**(1/5))
+        sqrt_obj = TexMobject(r"17^{(2/5)}", "= ", str(289**(1/5)) + r" \dots")
+        sqrt_obj[0].set_color(GREEN)
+        sqrt_obj.to_corner(UL)
+        self.play(Write(sqrt_obj))
+        
+        polys = [minpoly(float(a[:i]), 5, prec=10**(i - 2)) for i in range(8, 16)]
+
+        objs = [TexMobject(r"\alpha", "=", a[:i]) for i in range(8, 16)]
+        
+        for poly, obj in zip(polys, objs):
+            poly_obj = TexMobject(r"f(x)", "=", polynomial_string(poly))
+            poly_obj.set_color(YELLOW)
+            obj[0].set_color(RED)
+
+            obj.next_to(sqrt_obj, direction=DOWN)
+            poly_obj.next_to(obj, direction=DOWN)
+            obj.to_edge(LEFT)
+            poly_obj.to_edge(LEFT)
+
+            b = VGroup(obj, poly_obj)
 
 
-        # basis_mat = TexMobject(r"\begin{bmatrix} \textbf{b}_0 & \textbf{b}_1 & \textbf{b}_2 \end{bmatrix}")
-        # basis_mat.set_color(BLUE)
-        # equal = TexMobject("=")
-        # equal.next_to(basis_mat, direction=LEFT)
-        # basis_display = VGroup(equal, basis_mat)
-        # # basis_display.scale(.85)
-        # basis_display.next_to(mat_t)
-        # self.play(Write(basis_display))
+            self.play(Write(b))
+            self.wait(2)
+    
+            if polynomial_string(poly).strip() == "x^5 - 289":
+                print("YES")
+                text = TextMobject("Yes!")
+                text.set_color(GREEN)
+                text.next_to(obj, buff=1)
+                self.play(Write(text))
+                self.wait(2)
+            else:
+                text = TextMobject("Nope")
+                text.set_color(RED)
+                text.next_to(obj, buff=1)
+                self.play(Write(text))
+                self.wait(2)
+                self.play(FadeOutAndShift(text), FadeOutAndShift(b))
+                
 
 
+            
+                
+        
 
+            
 
 
 ##############################################################################
@@ -935,21 +1098,44 @@ def lll(basis, delta=.75):
             k = max(k - 1, 1)
     return basis
 
+# def polynomial_string(poly_list):
+#     out = ""
+#     for i, coeff in enumerate(poly_list):
+#         coeff = int(coeff)
+#         if coeff != 0:
+#             sign = "+"
+#             if coeff < 0:
+#                 sign = "-"
+#             if i == 0:
+#                 out += str(coeff)
+#                 continue
+#             coeff_str = abs(coeff)
+#             if abs(coeff) == 1:
+#                 coeff_str = ""
+#             out += " {} {}x^{}".format(sign, coeff_str, i)
+#     return out
+
 def polynomial_string(poly_list):
     out = ""
-    for i, coeff in enumerate(poly_list):
+    d = len(poly_list)
+    for i, coeff in enumerate(reversed(poly_list)):
         coeff = int(coeff)
         if coeff != 0:
             sign = "+"
             if coeff < 0:
                 sign = "-"
-            if i == 0:
-                out += str(coeff)
-                continue
             coeff_str = abs(coeff)
+            if d - i - 1 == 0:
+                out += " {} {} ".format(sign, coeff_str)
+                continue
             if abs(coeff) == 1:
                 coeff_str = ""
-            out += " {} {}x^{}".format(sign, coeff_str, i)
+            if i == 0 and sign == "+":
+                sign = ""
+            if d - i - 2 == 0:
+                out += " {} {}x ".format(sign, coeff_str)
+                continue
+            out += " {} {}x^{}".format(sign, coeff_str, d - i - 1)
     return out
 
 def minpoly(alpha, deg, prec=10**6):
@@ -972,7 +1158,11 @@ def check(poly_list, alpha):
     return sum([coeff * alpha**i for i, coeff in enumerate(poly_list)])
         
 
-# a = 1.414213
-# b = minpoly(a, 2, prec=10**(len(str(a)) - 2)) 
-# print(check(b, a))      
+a = 3.105843
+b = minpoly(a, 5, prec=10**(len(str(a)) - 2)) 
+print(check(b, a))      
+
+c = 3.1058435015977
+d = minpoly(c, 5, prec=10**(len(str(c)) - 2)) 
+print(check(d, c))      
         
