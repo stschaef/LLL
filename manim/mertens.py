@@ -90,13 +90,97 @@ class definitions(Scene):
         self.play(Write(title))
 
 class RH(Scene):
-    def construct(self)
+    def construct(self):
+        zeta = TexMobject(r"\frac{1}{\zeta(s)}", "=", r"\sum^{\infty} {" , r"\mu(n)", r"\over n^s }")
+        zeta.set_color_by_tex(r"\mu", BLUE)
+        self.play(Write(zeta))
 
+        zeta.generate_target()
+        
+        mert_integral = TexMobject(r"M(x)", r"= \frac{1}{2 \pi i} \int_{\sigma - i \infty}^{\sigma + i \infty} \frac{x^s}{s \zeta(s)}")
+        mert_integral[0].set_color(GREEN)
+        implies = TexMobject(r"\Rightarrow")
+        
+        implies.next_to(zeta.target, buff=1)
+        mert_integral.next_to(implies, buff=1)
+
+        group = VGroup(zeta.target, implies, mert_integral)
+        group.to_edge(UP)
+        group.set_x(0)
+
+        self.play(MoveToTarget(zeta), LaggedStart(Write(implies)), LaggedStart(Write(mert_integral)))
+        self.wait(2)
+
+        conj = TextMobject("Mertens Conjecture")
+        conj.set_color(YELLOW)
+        rh = TextMobject("Riemann Hypothesis")
+        down_arrow = TexMobject(r"\Downarrow")
+        conj.next_to(group, direction=DOWN)
+        down_arrow.next_to(conj, direction=DOWN)
+        rh.next_to(down_arrow, direction=DOWN)
+
+        self.play(*[Write(a) for a in [rh, down_arrow, conj]])
+        self.wait(2)
+
+        conj_and_rh = VGroup(conj, down_arrow, rh)
+        conj_and_rh.generate_target()
+        conj_and_rh.target.to_edge(UP)
+
+        self.play(MoveToTarget(conj_and_rh),FadeOutAndShift(group), FadeOutAndShift(zeta))
+        self.wait(2)
+
+        disproof = TextMobject(r"Odlyzko and te Riele (1985) disprove the ", "Mertens Conjecture", r" \\ using LLL (1982) applied to Diophantine approximation")
+        disproof.next_to(conj_and_rh, direction=DOWN)
+        disproof.set_color_by_tex("Mertens", YELLOW)
+        self.play(Write(disproof))
+        self.wait(2)
+
+        liminf = TexMobject(r"\liminf {", r"M(n)", r"\over \sqrt{n} } < -1.009")
+        limsup = TexMobject(r"\limsup {", r"M(n)", r"\over \sqrt{n} } > 1.06")
+
+        liminf[1].set_color(GREEN)
+        limsup[1].set_color(GREEN)
+
+        limsup.next_to(disproof, direction=DOWN)
+        liminf.next_to(limsup, direction=DOWN)
+
+        self.play(*[Write(o) for o in [limsup, liminf]])
+        self.wait(2)
+
+        counter = TexMobject(r"\text{First counterexample } \in \left( 10^{16}, e^{1.59 \times 10^{40}} \right)")
+        counter.to_edge(DOWN)
+        self.play(Write(counter))
+        self.wait(5)
+
+        self.play(*[FadeOut(o) for o in [disproof, limsup, liminf, counter]])
+
+        like = TextMobject("Mertens-like Conjecture")
+        like.set_color(YELLOW)
+        like.move_to(conj.get_center())
+
+        self.play(Transform(conj, like))
+        self.wait(2)
+
+        lambda_mert = TexMobject(r"\left| M(x) \right|", r" < \lambda \sqrt{x}")
+        lambda_mert.next_to(conj, direction=DOWN)
+        lambda_mert[0].set_color(GREEN)
+
+        arrow_and_rh = VGroup(down_arrow, rh)
+        arrow_and_rh.generate_target()
+        arrow_and_rh.target.next_to(lambda_mert, direction=DOWN)
+
+        self.play(MoveToTarget(arrow_and_rh), Write(lambda_mert))
+        self.wait(2)
+        
+        more_compute = TextMobject(r"Odlyzko and te Riele claim that \\ more computation could disprove these")
+        more_compute.next_to(rh, direction=DOWN)
+        self.play(Write(more_compute))
+        self.wait(2)
 
 class GraphMert(GraphScene):
     CONFIG={
         "x_min": 0,
-        "x_max": 100,
+        "x_max": 10000000,
         "x_axis_label": "$x$",
         "y_axis_label": "$y$",
         "function_color": RED,
@@ -143,6 +227,9 @@ class GraphMert(GraphScene):
 
     def mertens_function(self, n):
         n = np.floor(n)
+        if n in self.memo.keys():
+            return self.memo[n]
+
         if n <= 0:
             self.memo[0] = 0
             return 0
