@@ -162,6 +162,12 @@ class PublicKey(GraphScene):
         self.wait(2)
         self.play(Write(poly_conditions), Write(coeffs_cond), Write(invertible))
         self.wait(3)
+
+        private_key = Key()
+        private_key.set_color_by_gradient(BLUE, GREEN)
+        private_key.next_to(polys, direction=LEFT)
+        self.play(Write(private_key))
+
         self.play(*[FadeOutAndShift(o) for o in [poly_conditions, coeffs_cond, invertible]])
         self.wait(2)
 
@@ -178,7 +184,12 @@ class PublicKey(GraphScene):
         h_pub[1].set_color(ORANGE)
         h_pub.next_to(params, direction=DOWN)
 
-        self.play(Transform(h, h_pub))
+        pub_key = Key()
+        pub_key.set_color_by_gradient(BLUE, GREEN)
+        pub_key.next_to(h_pub, direction=LEFT)
+        self.play(Write(pub_key))
+
+        self.play(Transform(h, h_pub), Write(pub_key))
         self.wait(2)
 
         msg = TexMobject("m", r"\text{ message as a polynomial}")
